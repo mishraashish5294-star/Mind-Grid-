@@ -297,7 +297,17 @@ function formatDuration(ms) {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
-async function loadQuestion() {
+// The in-flight load is remembered so the UI can wait for it instead of
+// ignoring clicks that arrive while a puzzle is still being fetched.
+function loadQuestion() {
+  const promise = loadQuestionRequest().finally(() => {
+    if (state.pendingLoad === promise) state.pendingLoad = null;
+  });
+  state.pendingLoad = promise;
+  return promise;
+}
+
+async function loadQuestionRequest() {
   if (!state.meta) return;
   const token = ++state.loadToken;
   stopTimer();
@@ -324,6 +334,15 @@ async function loadQuestion() {
 }
 
 async function revealHint() {
+  // Changing category or level starts a new puzzle; wait for that request
+  // instead of dropping the hint click silently.
+  if (state.pendingLoad) {
+    try {
+      await state.pendingLoad;
+    } catch {
+      /* the failed load has already been reported to the player */
+    }
+  }
   if (!state.question || state.answered) return;
   if (state.hintsUsed >= state.maxHints) return;
   try {
