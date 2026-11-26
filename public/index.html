@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="MindGrid — an adaptive college-level mathematical, spatial and sequence reasoning game." />
+  <meta name="theme-color" content="#0b1020" />
+  <title>MindGrid — Adaptive Reasoning Trainer</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%236366f1'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle' fill='white' font-family='Arial'%3E%E2%88%91%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">∑</span>
+      <span class="brand-text">
+        <strong>MindGrid</strong>
+        <small>Adaptive reasoning trainer</small>
+      </span>
+    </div>
+
+    <nav class="main-nav" aria-label="Main navigation">
+      <button type="button" class="nav-btn is-active" data-view="play" aria-current="page">Play</button>
+      <button type="button" class="nav-btn" data-view="progress">Progress</button>
+      <button type="button" class="nav-btn" data-view="guide">Guide</button>
+    </nav>
+
+    <div class="score-chips" aria-live="polite">
+      <span class="chip"><span class="chip-label">Score</span> <strong id="session-score">0</strong></span>
+      <span class="chip"><span class="chip-label">Streak</span> <strong id="session-streak">0</strong></span>
+    </div>
+  </header>
+
+  <div id="banner" class="banner" role="alert" hidden></div>
+
+  <main id="main" class="layout">
+    <!-- ---------------------------------------------------------- Play -->
+    <section id="view-play" class="view" aria-labelledby="play-heading">
+      <h1 id="play-heading" class="page-title">Train your reasoning</h1>
+      <p class="page-sub">Pick a category and a difficulty. Difficulty adapts to your accuracy and response time.</p>
+
+      <div class="panel">
+        <h2 class="panel-title">1 · Category</h2>
+        <div id="category-grid" class="category-grid" role="group" aria-label="Reasoning category"></div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">2 · Difficulty</h2>
+        <div id="level-grid" class="level-grid" role="group" aria-label="Difficulty level"></div>
+        <label class="toggle">
+          <input type="checkbox" id="adaptive-toggle" checked />
+          <span>Adaptive difficulty (recommended) — moves up or down automatically</span>
+        </label>
+      </div>
+
+      <div id="game-panel" class="panel game-panel" hidden>
+        <div class="question-head">
+          <span id="question-category" class="pill"></span>
+          <span id="question-level" class="pill pill-level"></span>
+          <span id="question-topic" class="pill pill-ghost"></span>
+          <span class="question-meta">
+            <span id="question-timer" class="timer" aria-label="Elapsed time">0:00</span>
+            <span id="question-counter" class="counter"></span>
+          </span>
+        </div>
+
+        <p id="question-prompt" class="question-prompt"></p>
+
+        <div id="choice-list" class="choice-list" role="group" aria-label="Answer choices"></div>
+
+        <div class="question-actions">
+          <button type="button" id="hint-btn" class="btn btn-ghost">Show hint</button>
+          <span id="hint-count" class="hint-count"></span>
+        </div>
+
+        <p id="hint-text" class="hint-text" hidden></p>
+
+        <div id="feedback-box" class="feedback" hidden aria-live="polite">
+          <h3 id="feedback-result" class="feedback-title"></h3>
+          <p class="feedback-line">Correct answer: <strong id="feedback-answer"></strong></p>
+          <p id="feedback-explanation" class="feedback-explanation"></p>
+          <p id="feedback-points" class="feedback-points"></p>
+          <p id="feedback-adaptive" class="feedback-adaptive"></p>
+          <button type="button" id="next-btn" class="btn btn-primary">Next puzzle</button>
+        </div>
+      </div>
+
+      <p id="play-empty" class="muted">Loading your first puzzle…</p>
+    </section>
+
+    <!-- ------------------------------------------------------ Progress -->
+    <section id="view-progress" class="view" aria-labelledby="progress-heading" hidden>
+      <div class="progress-head">
+        <div>
+          <h1 id="progress-heading" class="page-title">Your progress</h1>
+          <p class="page-sub">Saved against an anonymous session ID on this device.</p>
+        </div>
+        <div class="progress-actions">
+          <button type="button" id="progress-refresh" class="btn btn-ghost">Refresh</button>
+          <button type="button" id="progress-reset" class="btn btn-ghost danger">New session</button>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat"><span class="stat-label">Puzzles answered</span><strong id="stat-attempts">0</strong></div>
+        <div class="stat"><span class="stat-label">Correct</span><strong id="stat-correct">0</strong></div>
+        <div class="stat"><span class="stat-label">Accuracy</span><strong id="stat-accuracy">0%</strong></div>
+        <div class="stat"><span class="stat-label">Total score</span><strong id="stat-score">0</strong></div>
+        <div class="stat"><span class="stat-label">Current streak</span><strong id="stat-streak">0</strong></div>
+      </div>
+
+      <p id="progress-empty" class="muted" hidden>No attempts yet — play a puzzle to build your dashboard.</p>
+
+      <div id="category-progress" class="category-progress"></div>
+
+      <div class="panel">
+        <h2 class="panel-title">Shared activity</h2>
+        <p id="summary-line" class="muted">Loading server summary…</p>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------------------- Guide -->
+    <section id="view-guide" class="view" aria-labelledby="guide-heading" hidden>
+      <h1 id="guide-heading" class="page-title">How MindGrid works</h1>
+
+      <div class="panel">
+        <h2 class="panel-title">Categories and levels</h2>
+        <ul class="guide-list">
+          <li><strong>Mathematical reasoning</strong> — arithmetic fluency, algebra, matrices, logarithms, modular arithmetic, counting, probability and calculus.</li>
+          <li><strong>Spatial reasoning</strong> — areas, coordinate transformations, 3D volumes, rotations, vectors and linear transformations.</li>
+          <li><strong>Sequence reasoning</strong> — arithmetic and geometric progressions, recurrences, polynomial sequences, series and limits.</li>
+        </ul>
+        <p class="muted">Foundation → Intermediate → Advanced → Expert → Master. Each tier raises both the mathematics and the time budget.</p>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">Scoring</h2>
+        <p class="muted">A correct answer earns 100–300 base points depending on the level, a speed bonus for answering inside the level's time budget, minus 20% of the base per hint, multiplied by a streak bonus of up to 1.5×. Wrong answers score 0 and the worked explanation is always shown.</p>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">Feedback</h2>
+        <form id="feedback-form" class="feedback-form" novalidate>
+          <label class="field">
+            <span>How easy was the game to use?</span>
+            <select id="feedback-ease">
+              <option value="1">1 — Very hard to use</option>
+              <option value="2">2 — Hard</option>
+              <option value="3" selected>3 — Okay</option>
+              <option value="4">4 — Easy</option>
+              <option value="5">5 — Very easy</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>How challenging were the puzzles?</span>
+            <select id="feedback-challenge">
+              <option value="1">1 — Too easy</option>
+              <option value="2">2 — Easy</option>
+              <option value="3" selected>3 — Balanced</option>
+              <option value="4">4 — Hard</option>
+              <option value="5">5 — Too hard</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Comment (optional, max 500 characters)</span>
+            <textarea id="feedback-comment" rows="3" maxlength="500" placeholder="What should be improved?"></textarea>
+          </label>
+          <button type="submit" class="btn btn-primary">Send feedback</button>
+          <p id="feedback-status" class="muted" role="status"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>MindGrid · college project · no accounts, no personal data</span>
+    <span id="storage-note" class="muted"></span>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
