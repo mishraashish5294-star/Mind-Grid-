@@ -155,10 +155,33 @@ function fractionSum() {
   const num = a * d + c * b;
   const den = b * d;
   const ans = fraction(num, den);
+
+  // Wrong options are derived from the reduced answer, so the unreduced working
+  // can never be offered as a second copy of the correct answer.
+  const parts = String(ans).split("/");
+  const p = Number(parts[0]);
+  const q = parts.length > 1 ? Number(parts[1]) : 1;
+  const asFraction = (n, dn) => (dn === 1 ? String(n) : `${n}/${dn}`);
+  const candidates = [
+    `${a + c}/${b + d}`,
+    asFraction(p + 1, q),
+    asFraction(p, q + 1),
+    `${num}/${den}`,
+    `${a * c}/${b * d}`
+  ];
+  const seen = new Set([String(ans)]);
+  const distractors = [];
+  for (const candidate of candidates) {
+    if (distractors.length === 3) break;
+    if (seen.has(candidate)) continue;
+    seen.add(candidate);
+    distractors.push(candidate);
+  }
+
   return make({
     prompt: `Add the fractions: ${a}/${b} + ${c}/${d}`,
     answer: ans,
-    distractors: [`${a + c}/${b + d}`, `${num}/${den}`, `${a * c}/${b * d}`],
+    distractors,
     hint: "Rewrite both fractions with the common denominator, then add the numerators and simplify.",
     explanation: `${a}/${b} = ${a * d}/${den} and ${c}/${d} = ${c * b}/${den}. The sum is ${num}/${den} = ${ans}.`,
     topic: "Fractions",
