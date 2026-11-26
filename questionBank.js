@@ -88,6 +88,21 @@ function buildChoices(answer, distractors) {
   return { correct, choices };
 }
 
+// Picks three options that differ from the correct answer and from each other,
+// so a puzzle never has to fall back to a "None of these" filler.
+function uniqueOptions(correct, candidates) {
+  const seen = new Set([String(correct)]);
+  const options = [];
+  for (const candidate of candidates) {
+    if (options.length === 3) break;
+    const text = String(candidate);
+    if (!text || text === "NaN" || text === "undefined" || seen.has(text)) continue;
+    seen.add(text);
+    options.push(text);
+  }
+  return options;
+}
+
 let counter = 0;
 
 function make({ prompt, answer, distractors, hint, explanation, topic, type, level }) {
@@ -449,7 +464,14 @@ function midpoint() {
   return make({
     prompt: `Find the midpoint of A(${x1}, ${y1}) and B(${x2}, ${y2}).`,
     answer: `(${mx}, ${my})`,
-    distractors: [`(${x1 + x2}, ${y1 + y2})`, `(${my}, ${mx})`, `(${mx + 1}, ${my})`],
+    distractors: uniqueOptions(`(${mx}, ${my})`, [
+      `(${x1 + x2}, ${y1 + y2})`,
+      `(${my}, ${mx})`,
+      `(${mx + 1}, ${my})`,
+      `(${mx}, ${my + 1})`,
+      `(${x1}, ${y2})`,
+      `(${x2}, ${y1})`
+    ]),
     hint: "Average the x-coordinates and average the y-coordinates.",
     explanation: `Midpoint = (((${x1} + ${x2})/2), ((${y1} + ${y2})/2)) = (${mx}, ${my}).`,
     topic: "Coordinate Geometry",
@@ -465,7 +487,13 @@ function reflection() {
   return make({
     prompt: `Reflect the point (${x}, ${y}) in the ${axis}-axis. What are the new coordinates?`,
     answer: ans,
-    distractors: [axis === "x" ? `(${-x}, ${y})` : `(${x}, ${-y})`, `(${-x}, ${-y})`, `(${y}, ${x})`],
+    distractors: uniqueOptions(ans, [
+      axis === "x" ? `(${-x}, ${y})` : `(${x}, ${-y})`,
+      `(${-x}, ${-y})`,
+      `(${y}, ${x})`,
+      `(${x + 1}, ${y})`,
+      `(${x}, ${y + 1})`
+    ]),
     hint: axis === "x"
       ? "Reflecting in the x-axis keeps x and flips the sign of y."
       : "Reflecting in the y-axis keeps y and flips the sign of x.",
@@ -482,7 +510,13 @@ function translation() {
   return make({
     prompt: `Translate the point (${x}, ${y}) by the vector ⟨${dx}, ${dy}⟩. What are the new coordinates?`,
     answer: `(${x + dx}, ${y + dy})`,
-    distractors: [`(${x - dx}, ${y - dy})`, `(${x + dy}, ${y + dx})`, `(${x * dx}, ${y * dy})`],
+    distractors: uniqueOptions(`(${x + dx}, ${y + dy})`, [
+      `(${x - dx}, ${y - dy})`,
+      `(${x + dy}, ${y + dx})`,
+      `(${x * dx}, ${y * dy})`,
+      `(${x + dx + 1}, ${y + dy})`,
+      `(${x + dx}, ${y + dy + 1})`
+    ]),
     hint: "Add the vector components to the matching coordinates.",
     explanation: `(${x} + ${dx}, ${y} + ${dy}) = (${x + dx}, ${y + dy}).`,
     topic: "Vectors & Translation",
@@ -496,7 +530,13 @@ function circleArea() {
   return make({
     prompt: `A circle has radius ${r}. What is its area, in terms of π?`,
     answer: `${r * r}π`,
-    distractors: [`${2 * r}π`, `${r * r * 2}π`, `${r}π`],
+    distractors: uniqueOptions(`${r * r}π`, [
+      `${2 * r}π`,
+      `${r * r * 2}π`,
+      `${r}π`,
+      `${r * r + 2 * r}π`,
+      `${r * r - 1}π`
+    ]),
     hint: "Area of a circle = πr².",
     explanation: `A = π × ${r}² = ${r * r}π.`,
     topic: "Circles",
@@ -510,7 +550,13 @@ function cylinderVolume() {
   return make({
     prompt: `A cylinder has radius ${r} and height ${h}. What is its volume, in terms of π?`,
     answer: `${r * r * h}π`,
-    distractors: [`${2 * r * h}π`, `${r * h}π`, `${r * r * h * 2}π`],
+    distractors: uniqueOptions(`${r * r * h}π`, [
+      `${2 * r * h}π`,
+      `${r * h}π`,
+      `${r * r * h * 2}π`,
+      `${r * r * h + r * r}π`,
+      `${r * r * h - r}π`
+    ]),
     hint: "Volume of a cylinder = πr²h.",
     explanation: `V = π × ${r}² × ${h} = ${r * r * h}π cubic units.`,
     topic: "3D Geometry",
@@ -555,9 +601,9 @@ function rotation() {
   return make({
     prompt: `Rotate the point (${x}, ${y}) by ${angle}° anticlockwise about the origin. What are the new coordinates?`,
     answer: ans,
-    distractors: angle === 90
-      ? [`(${y}, ${-x})`, `(${-x}, ${-y})`, `(${x}, ${-y})`]
-      : [`(${y}, ${x})`, `(${-y}, ${x})`, `(${x}, ${y})`],
+    distractors: uniqueOptions(ans, angle === 90
+      ? [`(${y}, ${-x})`, `(${-x}, ${-y})`, `(${x}, ${-y})`, `(${-y}, ${-x})`, `(${x + 1}, ${y})`]
+      : [`(${y}, ${x})`, `(${-y}, ${x})`, `(${x}, ${y})`, `(${y}, ${-x})`, `(${x + 1}, ${y})`]),
     hint: angle === 90
       ? "A 90° anticlockwise rotation maps (x, y) to (−y, x)."
       : "A 180° rotation maps (x, y) to (−x, −y).",
