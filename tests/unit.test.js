@@ -204,6 +204,58 @@ test("answer comparison tolerates formatting differences", () => {
   assert.notEqual(normalizeAnswer("15"), normalizeAnswer("16"));
 });
 
+test("every puzzle offers four distinct choices that include the answer", () => {
+  for (const category of CATEGORIES) {
+    for (let level = 1; level <= LEVELS.length; level++) {
+      for (let draw = 0; draw < 60; draw++) {
+        const q = generateQuestion(category, level);
+        const where = `${category} L${level} draw ${draw} (${q.type})`;
+        assert.equal(q.choices.length, 4, `four choices — ${where}`);
+        assert.equal(new Set(q.choices).size, 4, `unique choices — ${where}`);
+        assert.ok(q.choices.includes(q.answer), `answer must be offered — ${where}`);
+        assert.ok(
+          !q.choices.includes("None of these"),
+          `a computable puzzle must not fall back to a filler option — ${where}`
+        );
+      }
+    }
+  }
+});
+
+test("sphere volume distractors never duplicate the correct answer", () => {
+  let checked = 0;
+  for (let draw = 0; draw < 400 && checked < 30; draw++) {
+    const q = generateQuestion("spatial", 3);
+    if (q.type !== "sphere-volume") continue;
+    checked++;
+    assert.equal(new Set(q.choices).size, 4, `unique choices for r in ${q.prompt}`);
+    assert.ok(q.choices.includes(q.answer));
+  }
+  assert.ok(checked > 0, "sphere puzzles should appear at Advanced level");
+});
+
+test("master sequence puzzles require a telescoping series", () => {
+  const types = new Set();
+  for (let draw = 0; draw < 300; draw++) types.add(generateQuestion("sequence", 5).type);
+  assert.ok(
+    types.has("telescoping-series"),
+    `expected a telescoping series at Master level, saw ${[...types].join(", ")}`
+  );
+
+  let checked = 0;
+  for (let draw = 0; draw < 300; draw++) {
+    const q = generateQuestion("sequence", 5);
+    if (q.type !== "telescoping-series") continue;
+    checked++;
+    const match = q.prompt.match(/k = 1 to (\d+)/);
+    assert.ok(match, `prompt should state the upper limit: ${q.prompt}`);
+    const n = Number(match[1]);
+    assert.equal(q.answer, `${n}/${n + 1}`, `sum of 1/(k(k+1)) to ${n}`);
+    assert.ok(q.explanation.includes(`${n}/${n + 1}`), "explanation should state the result");
+  }
+  assert.ok(checked > 0, "telescoping puzzles must be reachable");
+});
+
 test("the issued-question cache expires and can only be consumed once", () => {
   const cache = createQuestionCache(50, 10);
   cache.put({ id: "abc", answer: "7", category: "arithmetic", level: 1, hint: "h", explanation: "e" });
