@@ -21,6 +21,7 @@ const state = {
   totalScore: 0,
   streak: 0,
   answeredCount: 0,
+  loadToken: 0,
   view: "play"
 };
 
@@ -298,7 +299,10 @@ function formatDuration(ms) {
 
 async function loadQuestion() {
   if (!state.meta) return;
+  const token = ++state.loadToken;
   stopTimer();
+  state.question = null;
+  state.answered = true;
   $("play-empty").hidden = false;
   $("play-empty").textContent = "Loading puzzle…";
   $("game-panel").hidden = true;
@@ -307,8 +311,13 @@ async function loadQuestion() {
     const question = await api(
       `/api/question?category=${encodeURIComponent(state.category)}&level=${level}`
     );
+    // If another puzzle started loading while this request was in flight the
+    // response is stale: showing it would leave the puzzle on screen out of
+    // step with the question the server grades. Drop it instead.
+    if (token !== state.loadToken) return;
     renderQuestion(question);
   } catch (error) {
+    if (token !== state.loadToken) return;
     $("play-empty").textContent = "Could not load a puzzle.";
     showBanner(error.message);
   }
@@ -398,13 +407,14 @@ function renderResult(result, choice) {
 function applyAdaptive(result) {
   if (!state.adaptive || !result.adaptive) return;
   const next = result.adaptive.level;
-  if (next === state.levels[state.category]) return;
-  const from = state.meta.levels[state.levels[state.category] - 1];
+  const current = state.levels[state.category];
+  if (next === current) return;
+  const from = state.meta.levels[current - 1];
   const to = state.meta.levels[next - 1];
   state.levels[state.category] = next;
   saveLevels();
   renderLevelButtons();
-  toast(`Difficulty ${next > state.levels[state.category] ? "raised" : "eased"}: ${from} → ${to}`);
+  toast(`Difficulty ${next > current ? "raised" : "eased"}: ${from} → ${to}`);
 }
 
 function updateScoreChips() {
