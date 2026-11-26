@@ -516,7 +516,7 @@ function sphereVolume() {
   return make({
     prompt: `A sphere has radius ${r}. What is its volume, in terms of π?`,
     answer: `${ans}π`,
-    distractors: [`${4 * r * r}π`, `${(4 / 3) * r * r}π`, `${ans * 2}π`],
+    distractors: [`${(4 / 3) * r * r}π`, `${4 * r * r * r}π`, `${ans * 2}π`],
     hint: "Volume of a sphere = (4/3)πr³.",
     explanation: `V = (4/3)π × ${r}³ = (4/3)π × ${r * r * r} = ${ans}π.`,
     topic: "3D Geometry",
@@ -824,16 +824,16 @@ function quadraticConvergence() {
   });
 }
 
-function sumOfOddNumbers() {
-  const n = rand(5, 15);
+function telescopingSeries() {
+  const n = rand(4, 12);
   return make({
-    prompt: `Find the sum of the first ${n} odd numbers: 1 + 3 + 5 + … (${2 * n - 1}).`,
-    answer: n * n,
-    distractors: [n * (n + 1), 2 * n, n * n + n],
-    hint: "The sum of the first n odd numbers is n².",
-    explanation: `1 + 3 + … + ${2 * n - 1} = ${n}² = ${n * n}.`,
-    topic: "Series Summation",
-    type: "sum-of-odds",
+    prompt: `Evaluate Σ (k = 1 to ${n}) 1/(k(k+1)) and give the answer as a single fraction.`,
+    answer: `${n}/${n + 1}`,
+    distractors: [`1/${n + 1}`, `${n + 1}/${n + 2}`, `${n}/${n + 2}`],
+    hint: "Split the term with partial fractions: 1/(k(k+1)) = 1/k − 1/(k+1).",
+    explanation: `1/(k(k+1)) = 1/k − 1/(k+1), so the sum telescopes: 1 − 1/${n + 1} = ${n}/${n + 1}.`,
+    topic: "Telescoping Series",
+    type: "telescoping-series",
     level: 5
   });
 }
@@ -863,7 +863,7 @@ const SEQUENCE_BY_LEVEL = {
   2: [arithmeticSum, geometricNext, geometricNthTerm],
   3: [fibonacciLike, quadraticSequence, sumOfSquares],
   4: [linearRecurrence, infiniteGeometricSum, sequenceLimit],
-  5: [recurrenceWithN, quadraticConvergence, sumOfOddNumbers]
+  5: [recurrenceWithN, quadraticConvergence, telescopingSeries]
 };
 
 const BANKS = {
