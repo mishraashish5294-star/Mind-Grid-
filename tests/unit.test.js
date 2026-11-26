@@ -136,10 +136,13 @@ test("difficulty never exceeds Master or drops below Foundation", () => {
 
 test("only the recent window of attempts matters", () => {
   const old = Array.from({ length: 10 }, () => ({ correct: false, responseTimeMs: 100000 }));
-  const recent = Array.from({ length: 4 }, () => ({ correct: true, responseTimeMs: 5000 }));
+  const recent = Array.from({ length: 8 }, () => ({ correct: true, responseTimeMs: 5000 }));
   const result = recommendDifficulty([...old, ...recent], 3);
+  assert.equal(result.result !== undefined, false);
   assert.equal(result.signal, "promote");
   assert.equal(result.level, 4);
+  assert.equal(result.accuracy, 1);
+  assert.equal(result.sampleSize, 8);
 });
 
 /* ------------------------------------------------------------------ scoring */

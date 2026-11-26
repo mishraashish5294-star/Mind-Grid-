@@ -1,139 +1,145 @@
-# MindGrid – Mathematical Puzzle Game
+# MindGrid — Adaptive College-Level Reasoning Trainer
 
-MindGrid is a responsive, browser-based college project with three puzzle categories, five difficulty levels, hints, explanations, progress analytics, an adaptive recommendation engine, and an Express API.
+MindGrid is a browser-based reasoning game with three categories, five difficulty tiers, adaptive
+difficulty, hints, worked explanations, scoring and a progress dashboard. It runs as a small Express
+app that serves the frontend and a JSON API from one process.
 
-## Features
+Everything is plain JavaScript: no build step, no framework, no account system.
 
-- **Mathematical Reasoning / Arithmetic:** arithmetic, linear algebra, determinants, modular arithmetic, probability, combinatorics, and differentiation.
-- **Spatial Puzzles:** 2D geometry, coordinate reflections, 3D cylinder volume, rotations, and linear transformations.
-- **Sequence Puzzles:** arithmetic/geometric progressions, Fibonacci-style sequences, polynomial sequences, and linear recurrences.
-- **Five levels:** Foundation, Intermediate, Advanced, Expert, Master.
-- **Adaptive difficulty:** category-specific recommendations based on recent accuracy and median response time. It promotes after high accuracy with sufficiently quick answers, and eases difficulty after low accuracy / slow performance.
-- Hints and worked explanations, session statistics, category dashboard, feedback form.
-- PostgreSQL support when `DATABASE_URL` is configured; otherwise local JSON fallback.
-- Unit and API integration tests.
+---
 
-## Requirements
+## What you can play
 
-- Windows 10/11, macOS, or Linux
-- Node.js 18 or newer (Node.js 20 LTS recommended)
-- Internet connection for the first `npm install`
-- PostgreSQL is optional for local evaluation.
+| Category | What it trains | Example topics |
+| --- | --- | --- |
+| **Mathematical reasoning** | symbolic manipulation and calculus | order of operations, linear equations, matrix multiplication, logarithms, modular arithmetic, combinations, probability, derivatives |
+| **Spatial reasoning** | geometry and linear algebra | area/perimeter, coordinate reflections, cylinder volume, rotations, vectors, determinants as area scaling |
+| **Sequence reasoning** | pattern and series analysis | arithmetic and geometric progressions, recurrence relations, polynomial sequences, geometric series, limits |
 
-## Run on Windows (beginner-friendly)
+**Five difficulty tiers** — Foundation, Intermediate, Advanced, Expert, Master. Each tier raises both
+the mathematics and the time budget:
 
-1. Install Node.js LTS from https://nodejs.org/. During setup, keep the option to add Node to PATH enabled.
-2. Extract `MindGrid-v2.zip` to a folder such as `C:\\College\\MindGrid`.
-3. Open that folder in File Explorer.
-4. Click the address bar, type `cmd`, and press Enter. A Command Prompt opens in the project folder.
-5. Run:
+| Level | Character of the puzzles |
+| --- | --- |
+| 1 Foundation | recall and fluency (arithmetic, simple areas, linear sequences) |
+| 2 Intermediate | algebra and multi-step reasoning (linear systems, geometric progressions) |
+| 3 Advanced | college techniques (matrices, logs, counting, series) |
+| 4 Expert | multi-concept work (transformations, modular arithmetic, recurrences) |
+| 5 Master | calculus, limits, non-homogeneous recurrences, determinants |
 
-   ```bash
-   npm install
-   ```
+Every puzzle is multiple choice with one correct answer, three plausible distractors, a hint and a
+worked explanation.
 
-6. Run automated tests:
+## Scoring
 
-   ```bash
-   npm test
-   ```
+A correct answer earns `(base + speed bonus − hint penalty) × streak multiplier`:
 
-7. Start the game:
+- **Base** — 100 points at Foundation, +50 per tier (300 at Master).
+- **Speed bonus** — up to 50% of the base, scaled by how far inside the level's time budget you answer.
+- **Hint penalty** — 20% of the base per hint, maximum two hints per puzzle.
+- **Streak multiplier** — +10% per consecutive correct answer, capped at 1.5×.
 
-   ```bash
-   npm start
-   ```
+Wrong answers score 0 and still show the correct answer plus the explanation.
 
-8. Open http://localhost:3000 in Chrome or Edge.
+## Adaptive difficulty
 
-To stop the server, return to Command Prompt and press `Ctrl + C`.
+After each answer the server looks at your **last 8 attempts in that category** and moves the
+difficulty at most one level:
 
-## PostgreSQL setup (optional)
+- **Promote** when accuracy ≥ 80% and the median response time is ≤ 45 s.
+- **Ease down** when accuracy < 50%, or when accuracy < 75% and the median is ≥ 90 s.
+- **Hold** otherwise. High accuracy with slow answers gives the message "speed up to be promoted".
+- The first 3 attempts in a category are a warm-up before adaptation starts.
 
-1. Install PostgreSQL from https://www.postgresql.org/download/windows/.
-2. During setup, remember the password you choose for the `postgres` user.
-3. Create a database named `mindgrid` using pgAdmin or SQL:
+The recommendation is returned by the API and also shown on the dashboard. You can switch the
+adaptive behaviour off in the UI to keep a fixed level.
 
-   ```sql
-   CREATE DATABASE mindgrid;
-   ```
+---
 
-4. Copy `.env.example` to `.env` and set `DATABASE_URL` to your own credentials, for example:
+## Run it locally
 
-   ```text
-   DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/mindgrid
-   PORT=3000
-   ```
+Requirements: Node.js 18 or newer (developed on Node 20/22/26).
 
-5. Install dotenv if you want automatic `.env` loading (`npm install dotenv`) and add `require("dotenv").config();` as the first line of `server.js`, or set the environment variable in Command Prompt before starting:
-
-   ```cmd
-   set DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/mindgrid
-   npm start
-   ```
-
-If PostgreSQL is not configured or cannot be reached, the app falls back to `data/mindgrid.json`. Do not commit `.env` or the `data/` directory.
-
-## Tests and honest verification
-
-- `npm test` runs unit tests and API integration tests.
-- The integration test uses an isolated temporary JSON store; it does not require PostgreSQL.
-- PostgreSQL connection and persistence should be tested separately on a machine with a configured PostgreSQL server.
-- Browser compatibility, mobile layout, accessibility with assistive technology, and real multi-user load have not been independently certified.
-- Question generation is algorithmic and randomized; faculty should review mathematical content and difficulty calibration before formal grading or research use.
-- Adaptive thresholds are prototype heuristics, not a validated psychometric model.
-
-## GitHub upload (Windows)
-
-1. Create/sign in to GitHub at https://github.com/.
-2. Click **New repository**. Name it `MindGrid-Mathematical-Puzzle-Game`.
-3. Keep it Public or Private as your instructor requires. Do not initialize with another README if uploading this complete folder.
-4. In the project folder, open Command Prompt and run:
-
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial MindGrid v2 project"
-   git branch -M main
-   git remote add origin https://github.com/YOUR-USERNAME/MindGrid-Mathematical-Puzzle-Game.git
-   git push -u origin main
-   ```
-
-5. Replace `YOUR-USERNAME` with your GitHub username. GitHub may ask you to sign in through a browser.
-
-If Git is not installed, install it from https://git-scm.com/downloads and reopen Command Prompt.
-
-## API endpoints
-
-- `GET /api/health` – health check
-- `GET /api/meta` – category and level metadata
-- `GET /api/question?category=arithmetic&level=3` – generate a puzzle
-- `POST /api/attempt` – record an answer and get an adaptive recommendation
-- `GET /api/profile/:sessionId` – category-wise progress
-- `POST /api/feedback` – save voluntary feedback
-- `GET /api/summary` – aggregate project analytics
-
-## Data and privacy
-
-The browser creates a random anonymous session identifier. No login or personal profile is implemented. Avoid entering personal information in feedback comments. Local JSON data is stored in `data/`; PostgreSQL data stays in the configured database. This is a classroom prototype, not a hardened production service.
-
-## Project structure
-
-```text
-MindGrid/
-  public/
-    index.html
-    app.js
-    styles.css
-  tests/
-    unit.test.js
-    integration.test.js
-  adaptive.js
-  questionBank.js
-  storage.js
-  server.js
-  package.json
-  .env.example
-  .gitignore
-  README.md
+```bash
+npm install
+npm test          # unit + API integration tests
+npm start         # http://localhost:3000
 ```
+
+`npm run dev` restarts the server when a file changes.
+
+### Configuration
+
+Copy `.env.example` to `.env` if you want to override defaults. Environment variables:
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `PORT` | no | Port to listen on (default `3000`; AppJet supplies it) |
+| `DATABASE_URL` | no | PostgreSQL connection string. When empty, progress is stored in `data/mindgrid.json` |
+| `PGSSL` | no | Set to `true` when your PostgreSQL provider requires TLS (Supabase, Neon, Railway…) |
+| `DATA_DIR` | no | Folder for the JSON store (default `./data`) |
+
+The app never stores secrets in the repository. `.env` and `data/` are git-ignored.
+
+### Database
+
+Without `DATABASE_URL` the app still works and keeps progress in a local JSON file — good for
+development. For a real deployment set `DATABASE_URL` and the server creates its tables on startup:
+
+- `sessions` — one row per anonymous session
+- `attempts` — category, level, correctness, response time, hints, score, timestamp
+- `feedback` — usability ratings from the Guide tab
+
+Any PostgreSQL database works, including a free Supabase or Neon project. The schema is created
+automatically (`CREATE TABLE IF NOT EXISTS` plus idempotent `ALTER TABLE ... ADD COLUMN IF NOT
+EXISTS`), so no manual migration is needed.
+
+---
+
+## API
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/api/health` | service, storage kind, categories, levels |
+| GET | `/api/meta` | categories with labels/icons, level names, hints per puzzle |
+| GET | `/api/question?category=&level=` | issue a puzzle (answer and explanation are withheld) |
+| GET | `/api/hint/:questionId` | hint for an issued puzzle |
+| POST | `/api/attempt` | grade an answer; returns correctness, correct answer, explanation, score breakdown, streak, total, adaptive recommendation |
+| GET | `/api/profile/:sessionId` | dashboard data: totals, accuracy, per-category and per-level progress, recommendation |
+| GET | `/api/summary` | site-wide activity and storage backend |
+| POST | `/api/feedback` | store a usability rating (ease 1–5, challenge 1–5, comment ≤ 500 chars) |
+
+**Grading is server-side.** Issued puzzles live in a server cache for two hours; the browser never
+receives the answer, and each puzzle can only be answered once. Session IDs are random 32-character
+tokens validated with a strict pattern, and all request bodies are validated (types, ranges,
+lengths) with a 16 kB JSON limit.
+
+## Project layout
+
+```
+server.js        Express app, API routes, server-side grading, question cache
+questionBank.js  45 puzzle generators (3 categories × 5 levels)
+adaptive.js      difficulty recommendation from accuracy and response time
+scoring.js       points, speed bonus, hint penalty, streaks
+storage.js       PostgreSQL store + JSON fallback, shared interface
+public/          index.html, app.js, styles.css (responsive, no build step)
+tests/           unit.test.js, integration.test.js (node --test + supertest)
+```
+
+## Tests
+
+`npm test` runs both suites with the built-in Node test runner:
+
+- **Unit** — every generator for all 3 categories × 5 levels produces a valid, unique-choice puzzle
+  whose answer is among the choices; all text is English; difficulty clamping; the adaptive engine
+  (warm-up, promote, ease, hold, Master/Foundation limits, window); the scoring model; session-ID and
+  answer-normalisation helpers; question-cache expiry.
+- **Integration** — every endpoint, including answer grading, hint delivery, replay rejection,
+  validation errors, adaptive promotion/easing through the real API, dashboard aggregation,
+  persistence across a store reload, summary and feedback.
+
+## Deploy
+
+The included `Dockerfile` runs the app as a non-root user on port 3000. On AppJet, deploy the
+`appjet` branch and add `DATABASE_URL` (plus `PGSSL=true` if your provider needs TLS) under
+**Settings → Environment variables** to use PostgreSQL instead of the JSON fallback.
